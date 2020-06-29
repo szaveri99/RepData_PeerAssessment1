@@ -5,21 +5,81 @@ output:
     keep_md: true
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
 ## Loading and preprocessing the data
 
+```{r}
+f <- "C:\\Users\\Sakina Zaveri\\Desktop\\activity.csv"
+data <- read.csv(f,header = TRUE)
 
+library(lubridate)
+
+data$date <- ymd(data$date)
+```
 
 ## What is mean total number of steps taken per day?
+```{r}
 
+agg <- aggregate(x = data$steps, by = list(date = data$date),FUN = sum,na.rm = TRUE)
+hist(agg$x,col = "darkmagenta",xlab = "total steps",main = "total number of steps per day",breaks = seq(0,25000,2500))
 
+mean(agg$x)
+median(agg$x)
+
+```
 
 ## What is the average daily activity pattern?
 
+```{r}
+agg <- aggregate(x = data$steps, by = list(interval = data$interval),FUN = mean,na.rm = TRUE)
+
+plot(agg$interval,agg$x,type = "l",col = "red",xlab = "5-minute interval",ylab = "number of steps taken",main =  "average daily activity pattern")
+
+agg[which.max(agg$x),]$interval
+
+```
 
 
 ## Imputing missing values
 
+```{r}
+sum(is.na(data))
+#sum(!complete.cases(data))
+
+m <- mean(agg$x)
+
+new_data <- data
+
+new_data[is.na(new_data),1] <- m 
+avg <- aggregate(steps~date,new_data,sum)
+
+hist(avg$steps,col = "darkblue",xlab = "total steps",main = "total number of steps per day",breaks = seq(0,25000,2500))
+
+mean(avg$steps)
+median(avg$steps)
+```
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r}
+
+new_data$datetype <- sapply(new_data$date,function(x){
+if(weekdays(x)=="Saturday" | weekdays(x)=="Sunday") y <- "Weekend"
+else y<- "Weekday"
+ y
+})
+
+diff <- aggregate(steps~interval+datetype,new_data,mean)
+library(ggplot2)
+
+g <- ggplot(diff,aes(x =interval,y = steps,color = datetype))
+
+g+geom_line()+facet_wrap(~datetype,ncol = 1)+labs(x = "Interval",y = "No. of Steps", title = "differences in activity patterns between weekdays and weekends")
+```
+
+
+
+
